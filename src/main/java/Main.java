@@ -12,39 +12,55 @@ public class Main {
   private static final double UNIT_ROUNDOFF = Math.ulp(1.0) / 2;
 
   public static void main(String[] args) {
-    // Пример использования функций
-    String fileNameBE = "polynomTest1BE.dat";
-    String fileNameLE = "polynomTest2LE.dat";
-
-    List<Double> doubleListBE = parseFileToDoubleList(fileNameBE, ByteOrder.BIG_ENDIAN);
-    List<Double> doubleListLE = parseFileToDoubleList(fileNameLE, ByteOrder.LITTLE_ENDIAN);
-
-    System.out.println("Big-Endian:");
-    for (double v : doubleListBE) {
-      System.out.println(v);
+    {
+      String fileNameBE = "polynomTest1BE.dat";
+      List<Double> doubleListBE = parseFileToDoubleList(fileNameBE, ByteOrder.BIG_ENDIAN);
+      double x = doubleListBE.get(doubleListBE.size() - 1);
+      doubleListBE.remove(doubleListBE.size() - 1);
+      System.out.println("Big Endian:");
+      for (double v : doubleListBE) {
+        System.out.println("  " + v);
+      }
+      System.out.println("x: " + x);
+      outputAlgorithmGorner(doubleListBE, x);
+      System.out.println();
     }
 
-    System.out.println("\nLittle-Endian:");
-    for (double v : doubleListLE) {
-      System.out.println(v);
+    {
+      String fileNameLE = "polynomTest2LE.dat";
+      List<Double> doubleListLE = parseFileToDoubleList(fileNameLE, ByteOrder.LITTLE_ENDIAN);
+
+      double x1 = doubleListLE.get(doubleListLE.size() - 1);
+      doubleListLE.remove(doubleListLE.size() - 1);
+      double x2 = doubleListLE.get(doubleListLE.size() - 1);
+      doubleListLE.remove(doubleListLE.size() - 1);
+      double x3 = doubleListLE.get(doubleListLE.size() - 1);
+      doubleListLE.remove(doubleListLE.size() - 1);
+
+      System.out.println("Little Endian:");
+      for (double v : doubleListLE) {
+        System.out.println("  " + v);
+      }
+      System.out.println("x1: " + x1);
+      outputAlgorithmGorner(doubleListLE, x1);
+      System.out.println("x2: " + x2);
+      outputAlgorithmGorner(doubleListLE, x2);
+      System.out.println("x3: " + x3);
+      outputAlgorithmGorner(doubleListLE, x3);
+      System.out.println();
     }
-
-    double arg3 = doubleListLE.get(doubleListLE.size() - 1);
-    doubleListLE.remove(doubleListLE.size() - 1);
-
-    double arg2 = doubleListLE.get(doubleListLE.size() - 1);
-    doubleListLE.remove(doubleListLE.size() - 1);
-
-    double arg1 = doubleListLE.get(doubleListLE.size() - 1);
-    doubleListLE.remove(doubleListLE.size() - 1);
-
-    System.out.println(calculatePolynomialValue(doubleListLE, arg1));
-    System.out.println(calculatePosterior(doubleListLE, arg1));
-    System.out.println(calculateApriori(doubleListLE, arg1));
 
   }
 
-  //Преобразует значение типа double в его бинарное представление в формате IEEE 754 с длиной 64 бита.
+  private static void outputAlgorithmGorner(List<Double> doubleList, double x) {
+    System.out.println("Result: ");
+    System.out.println("  Apriori: " + calculateApriori(doubleList, x));
+    System.out.println("  Value: " + calculatePolynomialValue(doubleList, x));
+//    System.out.println(" SValue: " + calculatePolynomialValueTwo(doubleList, x));
+    System.out.println("  Posterior: " + calculatePosterior(doubleList, x));
+    System.out.println("The possibility of being zero: " + (Math.abs(calculatePolynomialValue(doubleList, x)) < calculateApriori(doubleList, x)));
+  }
+
   private static String doubleToBinaryString(double number) {
     long bits = Double.doubleToLongBits(number);
     String binary = Long.toBinaryString(bits);
@@ -52,20 +68,17 @@ public class Main {
     return binary;
   }
 
-  //Преобразует строку, содержащую бинарное представление значения типа double в формате IEEE 754 с длиной 64 бита,
   private static double binaryStringToDouble(String binaryString) {
     long bits = Long.parseLong(binaryString, 2);
     return Double.longBitsToDouble(bits);
   }
 
-  // Функция для преобразования массива битов в double
   private static double parseBitsToDouble(byte[] bytes, ByteOrder byteOrder) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     buffer.order(byteOrder);
     return buffer.getDouble();
   }
 
-  // Функция для чтения файла и преобразования строки битов в double (Big-Endian)
   private static List<Double> parseFileToDoubleList(String fileName, ByteOrder byteOrder) {
     List<Double> resultList = new ArrayList<>();
     try (DataInputStream dataInputStream = new DataInputStream(
@@ -112,5 +125,14 @@ public class Main {
     }
     return result;
   }
+
+  private static double calculatePolynomialValueTwo(List<Double> a, double x) {
+    double result = 0;
+    for (int i = 0; i < a.size(); i++) {
+      result += Math.pow(x, i) * a.get(i);
+    }
+    return result;
+  }
+
 
 }
