@@ -58,7 +58,9 @@ public class Main {
     System.out.println("  Value: " + calculatePolynomialValue(doubleList, x));
 //    System.out.println(" SValue: " + calculatePolynomialValueTwo(doubleList, x));
     System.out.println("  Posterior: " + calculatePosterior(doubleList, x));
-    System.out.println("The possibility of being zero: " + (Math.abs(calculatePolynomialValue(doubleList, x)) < calculateApriori(doubleList, x)));
+    System.out.println(
+        "The possibility of being zero: " + (Math.abs(calculatePolynomialValue(doubleList, x))
+            < calculateApriori(doubleList, x)));
   }
 
   private static String doubleToBinaryString(double number) {
@@ -95,12 +97,43 @@ public class Main {
   }
 
   public static double calculateApriori(List<Double> a, double x) {
+    double u = Math.ulp(1.0);  // Машинное эпсилон
+    double w = 2.0;  // Значение w
+    double b = 10.0;  // Значение b
+
+    double sqrtTerm = Math.sqrt(w / b);
+    double condition = 1.0 / 2.0 * (sqrtTerm * Math.pow(u, -0.5) - 1);
+
+//    n < 1/2 * (sqrt(w/b) * u^(-1/2) - 1),
+//        где:
+//    n - степень многочлена
+//    w - параметр равный 2, если основание системы счисления (β) четное, и 1 в противном случае
+//    b - основание системы счисления (например, 2 или 10)
+//    u - машинное эпсилон
+
     int n = a.size();
     double e = a.get(n - 1);
-    for (int i = 1; i < n; i++) {
-      e = e * Math.abs(x) + Math.abs(a.get(i));
+    if (n < condition)
+    {
+      for (int i = 1; i < n; i++) {
+        e = e * Math.abs(x) + Math.abs(a.get(i));
+      }
+      e = 2 * (n-1) * UNIT_ROUNDOFF * e;
     }
-    e = 2 * (n - 1) * UNIT_ROUNDOFF / (1 - 2 * (n - 1) * UNIT_ROUNDOFF) * e;
+    else {
+      for (int i = 1; i < n; i++) {
+        e = e * Math.abs(x) + Math.abs(a.get(i));
+      }
+      e = 2 * (n - 1) * UNIT_ROUNDOFF / (1 - 2 * (n - 1) * UNIT_ROUNDOFF) * e;
+    }
+
+//    Здесь n -1 используется вместо n, потому что в методе Горнера последний коэффициент
+//    a_n(где n - степень многочлена) не участвует в итерационном процессе.Последняя итерация в методе
+//    Горнера вычисляет значение константы a_0, которая не требует учета в формуле для
+//    априорной оценки погрешности.
+
+//    e = 2 * n * UNIT_ROUNDOFF * e;
+//    e = 2 * (n) * UNIT_ROUNDOFF / (1 - 2 * (n) * UNIT_ROUNDOFF) * e;
     return e;
   }
 
